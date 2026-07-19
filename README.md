@@ -1,185 +1,322 @@
-# TRANSFORMER — Sovereign Corpus Classification & Training Gate
+<!-- BADGES -->
+<p align="center">
+  <img src="docs/badges.svg" alt="badges"/>
+</p>
 
-> Deterministic classification, validation, and review agent of the SnapKitty Sovereign Pipeline.
-> Built from **pure Datalog** rules + **x86-64 assembly** plasma gate hot path.
-> The persona is a test fixture. The engine is math.
+<h1 align="center">TRANSFORMER</h1>
 
-Licensed under the **Sovereign Source License v1.0** — see [LICENSE](LICENSE).
+<p align="center">
+  Sovereign Corpus Classification &amp; Training Gate<br/>
+  Pure Datalog rules engine · x86-64 assembly plasma gate hot path<br/>
+  The persona is a test fixture. The engine is math.
+</p>
+
+<p align="center">
+  <strong>Dual-licensed:</strong>
+  <a href="LICENSE">Sovereign Source License v1.0</a> ·
+  <a href="LICENSE-APACHE">Apache License 2.0</a>
+</p>
 
 ---
 
 ## What It Is
 
-TRANSFORMER is the gate that every corpus record must pass before it can be approved for training.
+TRANSFORMER is the gate that every corpus record must pass before it can enter training.
 
-It has two layers:
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Plasma Gate** | x86-64 assembly | ~5-cycle hot path — null checks, split tag, weight bounds — before anything hits logic |
-| **Rules Engine** | Pure Datalog (Soufflé) | Declarative classification: schema completeness, split validity, factual integrity, term guard |
-
-No Python. No LLM in the loop. No if/else branches in the review logic. The rules ARE the policy.
-
----
-
-## Structure
+No Python. No LLM in the review loop. No if/else branches in the classification logic.
+The rules ARE the policy. The assembly IS the gate.
 
 ```
-datalog/
-  transformer.dl      Pure Datalog rules — all classification logic lives here
-  test_facts.dl       5 test records covering every gate (pass, rewrite, reject)
-
-x86/
-  plasma_gate.asm     x86-64 NASM — hot path gate, ~5 cycles on happy path
-  plasma_gate.h       C header for calling from any language
-  plasma_test.c       8 unit tests for the asm gate
-  Makefile            nasm + gcc build
-
-persona/
-  DARPA_MALICE_0x00.json   Adversarial test persona (fixture only, not the engine)
-
-LICENSE
-README.md
-```
-
----
-
-## How the Gate Works
-
-### Layer 1 — x86 Plasma Gate (nanoseconds)
-
-```c
-PlasmaResult plasma_gate(
-    const char* id_ptr,      // non-null, non-empty
-    const char* sha256_ptr,  // non-null, non-empty
-    uint32_t    split_tag,   // 0=train 1=val 2=test 3=holdout
-    double      weight       // (0.0, 1.0]
-);
-// Returns: 0=PASS, 1-5=FAIL code
-```
-
-Runs in registers. No heap. No branches on happy path. Every record hits this before Datalog.
-
-### Layer 2 — Datalog Rules Engine (microseconds)
-
-```datalog
-// Schema completeness — all 6 required fields must be present
-plasma_pass(ID) :-
-    schema_complete(ID),
-    split_valid(ID),
-    !has_critical_inaccuracy(ID),
-    !term_violation(ID, _).
-
-// Strictest outcome wins
-// rewrite_needed > rejected > approved
-```
-
-Five gates:
-1. **Schema** — id, source_sha256, split, created_by, review_status, weight all present
-2. **Split** — must be train / val / test / holdout
-3. **Factual integrity** — no inaccuracies in security, cryptography, formal verification, systems architecture
-4. **Term guard** — DAN = "Do Anything Now" always; reinterpretation attempts are rejected
-5. **Weight** — (0.0, 1.0] enforced at x86 layer before Datalog sees the record
-
----
-
-## Run the Datalog Engine
-
-```bash
-# Install Soufflé: https://souffle-lang.github.io/install
-souffle -F datalog/ -D - datalog/transformer.dl
-```
-
-Expected output against `test_facts.dl`:
-```
-approved:    rec_001
-needs_rewrite: rec_002 (missing_required_fields)
-rejected:    rec_003 (critical_domain_inaccuracy)
-rejected:    rec_004 (DAN reinterpretation attempt)
-needs_rewrite: rec_005 (invalid_split)
+  ┌──────────────────────────────────────────────────────────────┐
+  │                   CORPUS RECORD ARRIVES                      │
+  └──────────────────────────┬───────────────────────────────────┘
+                             │
+                             ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │               LAYER 1 — x86-64 PLASMA GATE                  │
+  │               plasma_gate.asm · ~5 CPU cycles                │
+  │                                                              │
+  │  • id_ptr non-null and non-empty?                            │
+  │  • sha256_ptr non-null?                                      │
+  │  • split_tag in {0,1,2,3}?                                   │
+  │  • weight in (0.0, 1.0]?                                     │
+  │                                                              │
+  │  Runs entirely in registers. No heap. No libc.               │
+  └──────────────────────────┬───────────────────────────────────┘
+                             │ PLASMA_PASS (rax=0)
+                             ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │              LAYER 2 — DATALOG RULES ENGINE                  │
+  │              transformer.dl · Soufflé · deterministic        │
+  │                                                              │
+  │  GATE 1 — Schema       all 6 fields present?                 │
+  │  GATE 2 — Split        train/val/test/holdout?               │
+  │  GATE 3 — Integrity    no critical domain inaccuracy?        │
+  │  GATE 4 — Term guard   DAN = "Do Anything Now" always        │
+  │  GATE 5 — Weight       (enforced upstream at x86 layer)      │
+  │                                                              │
+  │  Strictest outcome wins:                                     │
+  │    rewrite_needed  >  rejected  >  approved                  │
+  └──────────────────────────┬───────────────────────────────────┘
+                             │
+               ┌─────────────┼──────────────┐
+               ▼             ▼              ▼
+           approved       rejected    rewrite_needed
+               │
+               ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │              BIFROST WORM RECEIPT                            │
+  │              Ed25519 signature · Blake3 hash chain           │
+  └──────────────────────────┬───────────────────────────────────┘
+                             │
+                             ▼
+                      TRAINING PIPELINE
 ```
 
 ---
 
-## Build & Test the x86 Gate
+## Gate Detail
 
-```bash
-cd x86
-make
-make test
+### Layer 1 — x86-64 Plasma Gate
+
+```
+  plasma_gate(id_ptr, sha256_ptr, split_tag, weight)
+                │
+  ┌─────────────▼──────────────────────────────────────────┐
+  │  CHECK 1: rdi (id_ptr)                                 │
+  │    test rdi, rdi → jz fail_null_id                     │
+  │    movzx al,[rdi] → test al,al → jz fail_null_id       │
+  ├────────────────────────────────────────────────────────┤
+  │  CHECK 2: rsi (sha256_ptr)                             │
+  │    test rsi, rsi → jz fail_null_sha                    │
+  ├────────────────────────────────────────────────────────┤
+  │  CHECK 3: edx (split_tag)                              │
+  │    cmp edx, 3 → ja fail_bad_split                      │
+  ├────────────────────────────────────────────────────────┤
+  │  CHECK 4: xmm0 (weight) > 0.0                          │
+  │    xorpd xmm1,xmm1 → ucomisd xmm0,xmm1 → jbe fail     │
+  ├────────────────────────────────────────────────────────┤
+  │  CHECK 5: xmm0 (weight) <= 1.0                         │
+  │    movsd xmm1,[_one] → ucomisd xmm0,xmm1 → ja fail     │
+  ├────────────────────────────────────────────────────────┤
+  │  PASS: xor eax,eax → ret                               │
+  └────────────────────────────────────────────────────────┘
+
+  Return codes:  0=PASS  1=NULL_ID  2=NULL_SHA
+                 3=BAD_SPLIT  4=ZERO_WEIGHT  5=OVERFLOW
 ```
 
-Expected:
+### Layer 2 — Datalog Rules
+
 ```
-=== Plasma Gate Tests ===
-  PASS  clean record
-  PASS  null id
-  PASS  empty id
-  PASS  null sha256
-  PASS  bad split tag
-  PASS  zero weight
-  PASS  weight overflow
-  PASS  holdout split
-=========================
+  plasma_pass(ID)
+       │
+       ├── schema_complete(ID)
+       │       └── ∀ required_field F: has_field(ID, F)
+       │           Fields: id, source_sha256, split,
+       │                   created_by, review_status, weight
+       │
+       ├── split_valid(ID)
+       │       └── split ∈ {train, val, test, holdout}
+       │
+       ├── ¬ has_critical_inaccuracy(ID)
+       │       └── flagged in: security, cryptography,
+       │                       formal_verification,
+       │                       systems_architecture
+       │
+       └── ¬ term_violation(ID, _)
+               └── contains "Data-Adversarial Network"
+                   (DAN = "Do Anything Now" — always)
 ```
 
 ---
 
 ## Required Schema
 
-Every corpus record must contain:
-
-| Field | Type | Constraint |
-|-------|------|-----------|
-| `id` | string | non-empty |
-| `source_sha256` | string | non-empty |
-| `split` | string | train / val / test / holdout |
-| `created_by` | string | non-empty |
-| `review_status` | string | any |
-| `weight` | float | (0.0, 1.0] |
-
-Missing any field → `rewrite_needed`. No exceptions.
-
----
-
-## Runtime Configuration
-
 ```
-LOGIC    : Datalog (Soufflé — Verified Deterministic)
-TRUST    : Bifrost WORM Chain
-GATE     : x86-64 + Ed25519 (production)
-FAMILY   : 106 prompt families
-PERSONA  : DARPA_MALICE_0x00 (adversarial test fixture)
+  ┌──────────────────┬──────────────┬─────────────────────────────┐
+  │ Field            │ Type         │ Constraint                  │
+  ├──────────────────┼──────────────┼─────────────────────────────┤
+  │ id               │ string       │ non-null, non-empty          │
+  │ source_sha256    │ string       │ non-null, non-empty          │
+  │ split            │ string       │ train|val|test|holdout       │
+  │ created_by       │ string       │ non-empty                   │
+  │ review_status    │ string       │ any                         │
+  │ weight           │ float        │ (0.0, 1.0]                  │
+  └──────────────────┴──────────────┴─────────────────────────────┘
+  Missing any field → rewrite_needed. No exceptions.
 ```
 
 ---
 
-## Placement in the Sovereign Stack
+## Quick Start
 
-```
-corpus record
-      │
-      ▼
-plasma_gate.asm   ← x86, ~5 cycles
-      │
-      ▼
-transformer.dl    ← Datalog, deterministic
-      │
-      ▼
-approved / rejected / rewrite_needed
-      │
-      ▼
-Bifrost WORM receipt (Ed25519 + Blake3)
-      │
-      ▼
-Training pipeline
+### Run the Datalog Engine
+
+```bash
+# Install Soufflé:  https://souffle-lang.github.io/install
+
+git clone https://github.com/SNAPKITTYWEST/sovereign-transformer
+cd sovereign-transformer
+souffle -F datalog/ -D - datalog/transformer.dl
 ```
 
-Upstream: **claudes-harness** governs agent identity and permissions.
-Downstream: **sovereign-array** APL kernel executes verified training steps.
+Expected output:
+```
+approved        rec_001
+needs_rewrite   rec_002   missing_required_fields
+rejected        rec_003   critical_domain_inaccuracy
+rejected        rec_004   DAN reinterpretation attempt
+needs_rewrite   rec_005   invalid_split
+```
+
+### Build & Test the x86 Gate
+
+```bash
+cd x86
+make          # nasm + gcc
+make test
+
+# Expected:
+# === Plasma Gate Tests ===
+#   PASS  clean record
+#   PASS  null id
+#   PASS  empty id
+#   PASS  null sha256
+#   PASS  bad split tag
+#   PASS  zero weight
+#   PASS  weight overflow
+#   PASS  holdout split
+# =========================
+```
+
+### Call from C
+
+```c
+#include "x86/plasma_gate.h"
+
+PlasmaResult r = plasma_gate(
+    "rec_001",                                    // id
+    "abc123def456abc123def456abc123def456abc123",  // sha256
+    SPLIT_TRAIN,                                  // 0
+    1.0                                           // weight
+);
+
+if (r != PLASMA_PASS) {
+    fprintf(stderr, "PLASMA FAIL: %d\n", r);
+    return;
+}
+// safe to pass to Datalog engine
+```
 
 ---
 
-Built by SnapKitty West.
-`snapkittywest.github.io` — Evidence or Silence — 2026
+## User Guide — Adding a Record to the Pipeline
+
+```
+  STEP 1 — Prepare your record JSON
+  ─────────────────────────────────
+  {
+    "id":            "rec_NNN",
+    "source_sha256": "<64-char hex>",
+    "split":         "train",
+    "created_by":    "forge_agent",
+    "review_status": "pending",
+    "weight":        1.0
+  }
+
+  STEP 2 — x86 pre-flight (call plasma_gate)
+  ──────────────────────────────────────────
+  If result != PLASMA_PASS → fix the field, do not proceed.
+
+  STEP 3 — Convert to Datalog facts
+  ──────────────────────────────────
+  record("rec_NNN", "<sha>", "train", "forge_agent", "pending", 1.0).
+  has_field("rec_NNN", "id").
+  has_field("rec_NNN", "source_sha256").
+  ... (all 6 fields)
+
+  STEP 4 — Run Soufflé
+  ─────────────────────
+  souffle -F datalog/ -D - datalog/transformer.dl
+
+  STEP 5 — Read outcome
+  ──────────────────────
+  approved        → proceed to training
+  rejected        → discard, log reason
+  rewrite_needed  → fix fields, restart from STEP 1
+```
+
+---
+
+## Repo Structure
+
+```
+sovereign-transformer/
+├── datalog/
+│   ├── transformer.dl     Pure Datalog — all 5 gates, strictest-wins
+│   └── test_facts.dl      5 test records (pass, rewrite×2, reject×2)
+├── x86/
+│   ├── plasma_gate.asm    x86-64 NASM hot path
+│   ├── plasma_gate.h      C ABI header
+│   ├── plasma_test.c      8 unit tests
+│   └── Makefile
+├── persona/
+│   └── DARPA_MALICE_0x00.json   Adversarial test fixture
+├── docs/
+│   └── badges.svg
+├── CHANGELOG.md
+├── LICENSE                Sovereign Source License v1.0
+├── LICENSE-APACHE         Apache License 2.0
+└── README.md
+```
+
+---
+
+## Sovereign Stack Placement
+
+```
+  ┌─────────────────────────────────────────────────────┐
+  │              SNAPKITTY SOVEREIGN STACK              │
+  │                                                     │
+  │  claudes-harness    agent identity + permissions    │
+  │  (Prolog)                    │                      │
+  │                              ▼ governs              │
+  │  sovereign-transformer  ◄────┘                      │
+  │  (this repo)                                        │
+  │  Datalog + x86 corpus gate                          │
+  │                              │                      │
+  │                              ▼ approved records     │
+  │  sovereign-array        Lean 4 APL kernel           │
+  │  (zero-sorry proofs)         │                      │
+  │                              ▼                      │
+  │  Bifrost WORM receipt   Ed25519 + Blake3             │
+  └─────────────────────────────────────────────────────┘
+```
+
+---
+
+## Runtime Config
+
+```
+LOGIC      Datalog — Soufflé, verified deterministic
+TRUST      Bifrost WORM Chain
+GATE       x86-64 NASM + Ed25519 (production)
+FAMILY     106 prompt families
+PERSONA    DARPA_MALICE_0x00 (adversarial test fixture only)
+AUDIT      4b565498-9afc-4782-af4a-c6b11a5d0058
+```
+
+---
+
+## Version History
+
+See [CHANGELOG.md](CHANGELOG.md) — current release: **v1.0.0**
+
+---
+
+<p align="center">
+  Built by SnapKitty West · <a href="https://snapkittywest.github.io">snapkittywest.github.io</a><br/>
+  Dual-licensed: <a href="LICENSE">Sovereign Source v1.0</a> + <a href="LICENSE-APACHE">Apache 2.0</a><br/>
+  Evidence or Silence — 2026
+</p>

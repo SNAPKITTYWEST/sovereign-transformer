@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="28">
+  <!-- version -->
+  <g>
+    <rect x="0" y="0" width="56" height="20" rx="3" fill="#555"/>
+    <rect x="56" y="0" width="50" height="20" rx="3" fill="#007ec6"/>
+    <text x="8" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">version</text>
+    <text x="62" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">v1.0.0</text>
+  </g>
+  <!-- license SSL -->
+  <g transform="translate(112,0)">
+    <rect x="0" y="0" width="56" height="20" rx="3" fill="#555"/>
+    <rect x="56" y="0" width="78" height="20" rx="3" fill="#8e44ad"/>
+    <text x="8" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">license</text>
+    <text x="62" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">SSL v1.0</text>
+  </g>
+  <!-- license Apache -->
+  <g transform="translate(256,0)">
+    <rect x="0" y="0" width="56" height="20" rx="3" fill="#555"/>
+    <rect x="56" y="0" width="78" height="20" rx="3" fill="#e67e22"/>
+    <text x="8" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">license</text>
+    <text x="62" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">Apache 2.0</text>
+  </g>
+  <!-- language -->
+  <g transform="translate(400,0)">
+    <rect x="0" y="0" width="60" height="20" rx="3" fill="#555"/>
+    <rect x="60" y="0" width="120" height="20" rx="3" fill="#c0392b"/>
+    <text x="8" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">language</text>
+    <text x="66" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">Datalog + x86</text>
+  </g>
+  <!-- tests -->
+  <g transform="translate(546,0)">
+    <rect x="0" y="0" width="40" height="20" rx="3" fill="#555"/>
+    <rect x="40" y="0" width="64" height="20" rx="3" fill="#27ae60"/>
+    <text x="8" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">tests</text>
+    <text x="46" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">8 passing</text>
+  </g>
+  <!-- WORM sealed -->
+  <g transform="translate(676,0)">
+    <rect x="0" y="0" width="56" height="20" rx="3" fill="#555"/>
+    <rect x="56" y="0" width="80" height="20" rx="3" fill="#27ae60"/>
+    <text x="8" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">WORM</text>
+    <text x="62" y="14" font-family="DejaVu Sans,sans-serif" font-size="11" fill="#fff">sealed</text>
+  </g>
+</svg>
