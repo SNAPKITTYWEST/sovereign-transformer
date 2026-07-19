@@ -280,6 +280,69 @@ sovereign-transformer/
 
 ---
 
+
+---
+
+## Rust Daemon — Concurrency Architecture
+
+The `rust/` crate uses two `tokio::sync` primitives to make the gate safe under concurrent HTTP load:
+
+```
+  POST /gate arrives
+        │
+        ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │  Arc<Semaphore>  gate_semaphore                             │
+  │  .acquire().await  ← blocks if GATE_CONCURRENCY slots full  │
+  │  default: 256 concurrent evals    env: GATE_CONCURRENCY     │
+  └──────────────────────────┬──────────────────────────────────┘
+                             │ permit held
+                             ▼
+  plasma_gate()   ← pure sync, no alloc, mirrors plasma_gate.asm
+                             │
+                             ▼ PLASMA_PASS only
+  ┌─────────────────────────────────────────────────────────────┐
+  │  Arc<RwLock<GateConfig>>  gate_config                       │
+  │  .read().await  ← shared across all handlers               │
+  │  many concurrent readers, zero contention on happy path     │
+  │                                                             │
+  │  PATCH /gate/config  → .write().await                       │
+  │  exclusive lock, all reads finish first, then config swaps  │
+  │  hot-reload: update rules without process restart           │
+  └──────────────────────────┬──────────────────────────────────┘
+                             │ &GateConfig borrowed
+                             ▼
+  datalog::evaluate()  ← pure fn, zero alloc on approved path
+                             │
+                             ▼
+  permit drops  →  semaphore slot returns
+```
+
+### Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | liveness check |
+| `POST` | `/gate` | evaluate one record through plasma + Datalog |
+| `PATCH` | `/gate/config` | hot-reload GateConfig (required_fields, critical_domains, prohibited_terms) |
+
+### GateConfig (hot-reloadable)
+
+```json
+{
+  "required_fields":  ["id","source_sha256","split","created_by","review_status","weight"],
+  "critical_domains": ["security","cryptography","formal_verification","systems_architecture"],
+  "prohibited_terms": ["Data-Adversarial Network"]
+}
+```
+
+PATCH this to add a domain or term at runtime — the RwLock write completes in microseconds, all in-flight reads finish cleanly, no request is dropped.
+
+### Why not a Mutex?
+
+`RwLock` because config reads are the overwhelming majority. Under 256 concurrent evaluations all reading the same config, a `Mutex` would serialize every read. `RwLock` lets all 256 proceed simultaneously; the write lock for `PATCH /gate/config` is acquired only on explicit reconfiguration.
+
+
 ## Rust Daemon
 
 The Rust crate in `rust/` is a standalone HTTP server that mirrors both layers of this pipeline without requiring Soufflé or NASM at runtime. Deploy it anywhere Rust runs.
