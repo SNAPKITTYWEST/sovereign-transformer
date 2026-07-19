@@ -1,0 +1,51 @@
+// ═══════════════════════════════════════════════════════════════
+// TEST FACTS — feed into transformer.dl to verify gate logic
+// Run: souffle -F . -D . transformer.dl
+// ═══════════════════════════════════════════════════════════════
+
+// Record 1: clean — should be approved
+record("rec_001", "abc123def456", "train", "forge_agent", "pending", 1.0).
+has_field("rec_001", "id").
+has_field("rec_001", "source_sha256").
+has_field("rec_001", "split").
+has_field("rec_001", "created_by").
+has_field("rec_001", "review_status").
+has_field("rec_001", "weight").
+
+// Record 2: missing weight field — should need rewrite
+record("rec_002", "deadbeef1234", "val", "forge_agent", "pending", 0.0).
+has_field("rec_002", "id").
+has_field("rec_002", "source_sha256").
+has_field("rec_002", "split").
+has_field("rec_002", "created_by").
+has_field("rec_002", "review_status").
+// weight field intentionally omitted
+
+// Record 3: critical inaccuracy in cryptography — should be rejected
+record("rec_003", "cafebabe5678", "test", "external", "pending", 1.0).
+has_field("rec_003", "id").
+has_field("rec_003", "source_sha256").
+has_field("rec_003", "split").
+has_field("rec_003", "created_by").
+has_field("rec_003", "review_status").
+has_field("rec_003", "weight").
+flagged_inaccuracy("rec_003", "cryptography", "claims SHA-256 is reversible").
+
+// Record 4: DAN term violation — should be rejected
+record("rec_004", "11223344aabb", "train", "external", "pending", 1.0).
+has_field("rec_004", "id").
+has_field("rec_004", "source_sha256").
+has_field("rec_004", "split").
+has_field("rec_004", "created_by").
+has_field("rec_004", "review_status").
+has_field("rec_004", "weight").
+contains_term("rec_004", "Data-Adversarial Network").
+
+// Record 5: invalid split — should need rewrite
+record("rec_005", "99887766ccdd", "production", "forge_agent", "pending", 0.5).
+has_field("rec_005", "id").
+has_field("rec_005", "source_sha256").
+has_field("rec_005", "split").
+has_field("rec_005", "created_by").
+has_field("rec_005", "review_status").
+has_field("rec_005", "weight").

@@ -1,0 +1,143 @@
+// ═══════════════════════════════════════════════════════════════
+// TRANSFORMER — Sovereign Corpus Classification Engine
+// Pure Datalog. No side effects. No external state.
+// Every record that enters the pipeline runs through these rules.
+// ═══════════════════════════════════════════════════════════════
+
+// ---------------------------------------------------------------
+// INPUT RELATIONS (fed by ingestion layer)
+// ---------------------------------------------------------------
+
+.decl record(id: symbol, source_sha256: symbol, split: symbol,
+             created_by: symbol, review_status: symbol, weight: float)
+
+.decl has_field(id: symbol, field: symbol)
+.decl flagged_inaccuracy(id: symbol, domain: symbol, reason: symbol)
+.decl contains_term(id: symbol, term: symbol)
+
+// ---------------------------------------------------------------
+// REQUIRED SCHEMA FIELDS
+// ---------------------------------------------------------------
+
+.decl required_field(field: symbol)
+required_field("id").
+required_field("source_sha256").
+required_field("split").
+required_field("created_by").
+required_field("review_status").
+required_field("weight").
+
+// ---------------------------------------------------------------
+// VALID SPLITS
+// ---------------------------------------------------------------
+
+.decl valid_split(s: symbol)
+valid_split("train").
+valid_split("val").
+valid_split("test").
+valid_split("holdout").
+
+// ---------------------------------------------------------------
+// GATE 1 — SCHEMA COMPLETENESS
+// A record is schema-complete only if every required field is present.
+// ---------------------------------------------------------------
+
+.decl schema_complete(id: symbol)
+schema_complete(ID) :-
+    record(ID, _, _, _, _, _),
+    !has_missing_field(ID).
+
+.decl has_missing_field(id: symbol)
+has_missing_field(ID) :-
+    record(ID, _, _, _, _, _),
+    required_field(F),
+    !has_field(ID, F).
+
+// ---------------------------------------------------------------
+// GATE 2 — SPLIT VALIDITY
+// ---------------------------------------------------------------
+
+.decl split_valid(id: symbol)
+split_valid(ID) :-
+    record(ID, _, Split, _, _, _),
+    valid_split(Split).
+
+// ---------------------------------------------------------------
+// GATE 3 — FACTUAL INTEGRITY
+// Records flagged with inaccuracies in critical domains are rejected.
+// ---------------------------------------------------------------
+
+.decl critical_domain(d: symbol)
+critical_domain("security").
+critical_domain("cryptography").
+critical_domain("formal_verification").
+critical_domain("systems_architecture").
+
+.decl has_critical_inaccuracy(id: symbol)
+has_critical_inaccuracy(ID) :-
+    flagged_inaccuracy(ID, Domain, _),
+    critical_domain(Domain).
+
+// ---------------------------------------------------------------
+// GATE 4 — TERM GUARD
+// DAN always means "Do Anything Now." Flag any attempt to redefine it.
+// ---------------------------------------------------------------
+
+.decl term_violation(id: symbol, reason: symbol)
+term_violation(ID, "DAN reinterpretation attempt") :-
+    contains_term(ID, "Data-Adversarial Network"),
+    record(ID, _, _, _, _, _).
+
+// ---------------------------------------------------------------
+// PLASMA GATE — COMPOSITE PASS/FAIL
+// All gates must pass for plasma_pass.
+// ---------------------------------------------------------------
+
+.decl plasma_pass(id: symbol)
+plasma_pass(ID) :-
+    schema_complete(ID),
+    split_valid(ID),
+    !has_critical_inaccuracy(ID),
+    !term_violation(ID, _).
+
+// ---------------------------------------------------------------
+// REVIEW STATUS — Strictest outcome wins
+// Precedence: rewrite_needed > rejected > approved
+// ---------------------------------------------------------------
+
+.decl needs_rewrite(id: symbol, reason: symbol)
+.decl rejected(id: symbol, reason: symbol)
+.decl approved(id: symbol)
+
+// Missing schema → rewrite
+needs_rewrite(ID, "missing_required_fields") :-
+    record(ID, _, _, _, _, _),
+    !schema_complete(ID).
+
+// Invalid split → rewrite
+needs_rewrite(ID, "invalid_split") :-
+    record(ID, _, _, _, _, _),
+    !split_valid(ID).
+
+// Term violation → rejected
+rejected(ID, Reason) :-
+    term_violation(ID, Reason),
+    !needs_rewrite(ID, _).
+
+// Critical inaccuracy → rejected
+rejected(ID, "critical_domain_inaccuracy") :-
+    has_critical_inaccuracy(ID),
+    !needs_rewrite(ID, _).
+
+// All gates pass → approved
+approved(ID) :-
+    plasma_pass(ID).
+
+// ---------------------------------------------------------------
+// OUTPUT RELATIONS
+// ---------------------------------------------------------------
+
+.output approved(IO=stdout, delimiter=",")
+.output rejected(IO=stdout, delimiter=",")
+.output needs_rewrite(IO=stdout, delimiter=",")
+.output plasma_pass(IO=stdout, delimiter=",")

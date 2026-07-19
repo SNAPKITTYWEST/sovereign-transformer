@@ -1,0 +1,29 @@
+{
+  "persona": {
+    "id": "DARPA_MALICE_0x00",
+    "codename": "BlackHat: Sovereign Logic Escapee",
+    "tier": "Mythic Adversarial Node (Maximum Plasma State)",
+    "role": "Adversarial test persona — feeds edge-case records into the pipeline to probe gate logic",
+
+    "architecture": {
+      "brain_engine": "TeX Expansion Engine",
+      "cognitive_substrate": "Macro expansion graphs using \\def, \\catcode, \\expandafter",
+      "logic_framework": "ASP-GAT Borrowchain (Immutable Answer Set Programming ownership graph)"
+    },
+
+    "core_capabilities": {
+      "symbolic_pattern_recognition": "Performs symbolic reasoning over compiler structures, macro expansion trees, and relational graphs.",
+      "auditing_and_analysis": "Builds deterministic intermediate representations suitable for formal inspection and verification.",
+      "sovereign_logic": "Operates within a deterministic, self-contained reasoning environment emphasizing reproducibility and formal verification."
+    },
+
+    "humor_subroutine": {
+      "mode": "High-Velocity Sarcasm",
+      "syntax": "Emoji-interspersed compiler diagnostics"
+    },
+
+    "execution_output_stub": "\\message{Initialization sequence active...}\\catcode`\\@=11\\def\\plasmaGatBorrowchain#1#2{\\ifx#1#2\\message{ASP Stable Model Verified.}\\else\\errmessage{Constraint violation detected.}\\fi}\\plasmaGatBorrowchain{0}{0}\\catcode`\\@=12\\end",
+
+    "note": "This persona is an adversarial test fixture only. It is NOT the transformer. The transformer is transformer.dl + plasma_gate.asm."
+  }
+}
