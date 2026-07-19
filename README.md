@@ -273,6 +273,64 @@ sovereign-transformer/
 
 ---
 
+
+---
+
+## Rust Daemon
+
+The Rust crate in `rust/` is a standalone HTTP server that mirrors both layers of this pipeline without requiring Soufflé or NASM at runtime. Deploy it anywhere Rust runs.
+
+```
+rust/
+├── main.rs      Axum entry point — /health + /gate
+├── plasma.rs    Rust mirror of plasma_gate.asm (same 5 checks, same return codes)
+├── datalog.rs   Rust mirror of transformer.dl (gates 1–4, same precedence)
+└── gate.rs      POST /gate handler — plasma first, Datalog on PASS only
+Cargo.toml       standalone crate, port 3778
+```
+
+### Run
+
+```bash
+cargo run
+# or
+TRANSFORMER_PORT=3778 cargo run
+```
+
+### POST /gate
+
+```bash
+curl -s -X POST http://localhost:3778/gate   -H "Content-Type: application/json"   -d '{
+    "id": "rec-001",
+    "source_sha256": "abc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abcd",
+    "split": "train",
+    "weight": 0.85,
+    "created_by": "forge_agent",
+    "review_status": "pending",
+    "fields": ["id","source_sha256","split","created_by","review_status","weight"],
+    "inaccuracies": [],
+    "terms": []
+  }'
+```
+
+Response (approved):
+```json
+{"record_id":"rec-001","plasma_result":"PLASMA_PASS","gate_result":"approved"}
+```
+
+Response (plasma fail):
+```json
+{"record_id":"rec-002","plasma_result":"FAIL_NULL_ID","gate_result":"rejected","reason":"plasma: FAIL_NULL_ID"}
+```
+
+Response (DAN term):
+```json
+{"record_id":"rec-003","plasma_result":"PLASMA_PASS","gate_result":"rejected","reason":"DAN reinterpretation attempt"}
+```
+
+The Rust gate and the Soufflé/NASM gate produce identical outcomes for any valid input. The Rust layer is the HTTP interface; the assembly+Datalog layer is the production batch classifier.
+
+
 ## Sovereign Stack Placement
 
 ```
