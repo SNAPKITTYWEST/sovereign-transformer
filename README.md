@@ -1,10 +1,11 @@
 <!-- BADGES -->
 <p align="center">
-  <img src="docs/badges/version.svg" alt="version"/>
-  <img src="docs/badges/license-ssl.svg" alt="license: SSL v1.0"/>
-  <img src="docs/badges/license-apache.svg" alt="license: Apache 2.0"/>
-  <img src="docs/badges/language.svg" alt="language: Datalog + x86"/>
-  <img src="docs/badges/worm.svg" alt="WORM sealed"/>
+  <img src="https://img.shields.io/badge/version-v1.0.0-007ec6?style=flat-square" alt="version"/>
+  <img src="https://img.shields.io/badge/license-SSL_v1.0-8e44ad?style=flat-square" alt="license: SSL v1.0"/>
+  <img src="https://img.shields.io/badge/license-Apache_2.0-blue?style=flat-square" alt="license: Apache 2.0"/>
+  <img src="https://img.shields.io/badge/language-Datalog_%2B_x86_%2B_Rust-c0392b?style=flat-square" alt="language"/>
+  <img src="https://img.shields.io/badge/async-tokio-2e86c1?style=flat-square" alt="async: tokio"/>
+  <img src="https://img.shields.io/badge/audit-WORM_sealed-00b894?style=flat-square" alt="WORM sealed"/>
 </p>
 
 <h1 align="center">TRANSFORMER</h1>
@@ -279,6 +280,69 @@ sovereign-transformer/
 
 
 ---
+
+
+---
+
+## Rust Daemon — Concurrency Architecture
+
+The `rust/` crate uses two `tokio::sync` primitives to make the gate safe under concurrent HTTP load:
+
+```
+  POST /gate arrives
+        │
+        ▼
+  ┌─────────────────────────────────────────────────────────────┐
+  │  Arc<Semaphore>  gate_semaphore                             │
+  │  .acquire().await  ← blocks if GATE_CONCURRENCY slots full  │
+  │  default: 256 concurrent evals    env: GATE_CONCURRENCY     │
+  └──────────────────────────┬──────────────────────────────────┘
+                             │ permit held
+                             ▼
+  plasma_gate()   ← pure sync, no alloc, mirrors plasma_gate.asm
+                             │
+                             ▼ PLASMA_PASS only
+  ┌─────────────────────────────────────────────────────────────┐
+  │  Arc<RwLock<GateConfig>>  gate_config                       │
+  │  .read().await  ← shared across all handlers               │
+  │  many concurrent readers, zero contention on happy path     │
+  │                                                             │
+  │  PATCH /gate/config  → .write().await                       │
+  │  exclusive lock, all reads finish first, then config swaps  │
+  │  hot-reload: update rules without process restart           │
+  └──────────────────────────┬──────────────────────────────────┘
+                             │ &GateConfig borrowed
+                             ▼
+  datalog::evaluate()  ← pure fn, zero alloc on approved path
+                             │
+                             ▼
+  permit drops  →  semaphore slot returns
+```
+
+### Routes
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/health` | liveness check |
+| `POST` | `/gate` | evaluate one record through plasma + Datalog |
+| `PATCH` | `/gate/config` | hot-reload GateConfig (required_fields, critical_domains, prohibited_terms) |
+
+### GateConfig (hot-reloadable)
+
+```json
+{
+  "required_fields":  ["id","source_sha256","split","created_by","review_status","weight"],
+  "critical_domains": ["security","cryptography","formal_verification","systems_architecture"],
+  "prohibited_terms": ["Data-Adversarial Network"]
+}
+```
+
+PATCH this to add a domain or term at runtime — the RwLock write completes in microseconds, all in-flight reads finish cleanly, no request is dropped.
+
+### Why not a Mutex?
+
+`RwLock` because config reads are the overwhelming majority. Under 256 concurrent evaluations all reading the same config, a `Mutex` would serialize every read. `RwLock` lets all 256 proceed simultaneously; the write lock for `PATCH /gate/config` is acquired only on explicit reconfiguration.
+
 
 ## Rust Daemon
 
