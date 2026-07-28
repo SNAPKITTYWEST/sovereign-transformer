@@ -147,9 +147,63 @@
 
 ---
 
-## TIER 5: REFERENCE IMPLEMENTATIONS
+## TIER 5: GOVERNANCE & SWARM ORCHESTRATION
 
-### 11. **bob-orchestrator** 🤖
+### 11. **shadow-orchestrator** 👻
+**Repo**: shadow-orchestrator (local)  
+**Role**: Governance layer for autonomous swarm + cryptographic immutability  
+**Cherry-Pick**:
+- Multi-model WORM chain (three models same proof)
+- Agent orchestration pattern
+- Resurrection/graveyard agent logic
+- Cryptographic sealing framework
+
+**Use In**: Layer 3 (Governance - supplements Nemotron) + Agent dispatch patterns
+
+---
+
+### 12. **grisp-shadow-fleet** 🚀
+**Repo**: grisp-shadow-fleet (local)  
+**Role**: Autonomous fleet deployment (GitHub Apps + agents)  
+**Cherry-Pick**:
+- GitHub Apps framework
+- DLM (Distributed Ledger Management)
+- vLLM integration pattern
+- Fleet orchestration
+
+**Use In**: Reference for autonomous agent deployment patterns
+
+---
+
+### 13. **magma-token** (FRG/MGM) 💎
+**Repo**: magma-token (local)  
+**Role**: Native mesh token for SACM (Stochastic Autonomous Compute Mesh)  
+**Cherry-Pick**:
+- ERC-20 token contract (Base L2)
+- Work-to-earning logic (WORM → token)
+- SACM tier system
+- Governance voting
+
+**Use In**: Layer 7 (Optional: Future - for mesh participation rewards)
+
+---
+
+### 14. **agentic-arena** 🏛️
+**Repo**: https://snapkittywest.github.io/agentic-arena/  
+**Role**: The Graveyard - tournament arena for competing agents (AHMAD-BOT vs EDUALC)  
+**Cherry-Pick**:
+- Agent tournament framework
+- Concurrent agent execution
+- Result comparison + ranking
+- Legend completion patterns
+
+**Use In**: Reference for multi-agent competition + quality validation
+
+---
+
+## TIER 6: REFERENCE IMPLEMENTATIONS
+
+### 15. **bob-orchestrator** 🤖
 **Repo**: https://github.com/SNAPKITTYWEST/bob-orchestrator  
 **Role**: Compliance agent for UiPath (reference for agent dispatch patterns)  
 **Cherry-Pick**:
@@ -162,7 +216,7 @@
 
 ---
 
-### 12. **bob-engine** 🎮
+### 16. **bob-engine** 🎮
 **Repo**: https://github.com/SNAPKITTYWEST/bob-engine  
 **Role**: Sovereign world engine (demonstration of WORM-sealed agents)  
 **Cherry-Pick**: None directly (reference only)
@@ -171,7 +225,7 @@
 
 ---
 
-### 13. **abzu-sovereign-ide** 💻
+### 17. **abzu-sovereign-ide** 💻
 **Repo**: https://github.com/SNAPKITTYWEST/abzu-sovereign-ide  
 **Role**: BEAM IDE with live WORM integration (reference)  
 **Cherry-Pick**:
@@ -183,7 +237,7 @@
 
 ---
 
-### 14. **bob-ide-clean** 📝
+### 18. **bob-ide-clean** 📝
 **Repo**: bob-ide-clean (local, no remote)  
 **Role**: Monaco editor + WebLLM base  
 **Cherry-Pick**:
@@ -195,9 +249,9 @@
 
 ---
 
-## TIER 6: UTILITIES
+## TIER 7: UTILITIES
 
-### 15. **kittybrowse** 🌐
+### 19. **kittybrowse** 🌐
 **Location**: https://snapkittywest.github.io/kittybrowse/  
 **Role**: Integration showcase (all components working together)  
 **Cherry-Pick**: None (reference demonstration)
@@ -388,15 +442,34 @@ cargo build --release
 
 ---
 
-## STATUS: COMPLETE CHERRY-PICK MAP
+## STATUS: COMPLETE CHERRY-PICK MAP (19 COMPONENTS)
 
-✅ **All 15 components identified**  
+✅ **All 19 components identified**  
 ✅ **Cherry-pick paths documented**  
 ✅ **Integration points mapped**  
+✅ **Governance layers (shadow-orchestrator) integrated**  
+✅ **Fleet orchestration (grisp-shadow-fleet) mapped**  
+✅ **Mesh token system (magma-token) documented**  
+✅ **Agent arena (agentic-arena) reference included**  
 ✅ **Phase 0 sequence ready**  
 ✅ **Ready to execute**
 
 ---
 
-**Next**: Execute Phase 0 (build sen-cli with all cherry-picked components)
+## WHAT'S NEW IN THIS UPDATE
+
+- **shadow-orchestrator**: Multi-model WORM governance + swarm orchestration
+- **grisp-shadow-fleet**: Autonomous fleet deployment framework
+- **magma-token**: Native mesh token (FRG/MGM) for SACM participation
+- **agentic-arena**: Tournament framework for competing agents
+
+These add the **autonomous swarm layer** to sovereign-transformer:
+- Multiple agents can execute in parallel
+- Each sealed to same WORM chain
+- Token-based governance (optional)
+- Tournament-style validation via agentic-arena
+
+---
+
+**Next**: Execute Phase 0 (build sen-cli with all 19 cherry-picked components)
 
