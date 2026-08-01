@@ -1,0 +1,47 @@
+<!-- training_record.dtd — Sovereign Transformer Training Record DTD -->
+<!-- ISO 8879:1986 SGML Document Type Definition -->
+<!-- Every training record passing through sovereign-transformer validates here -->
+<!-- BEFORE Datalog plasma_pass runs. Structural gate before semantic gate. -->
+<!-- Connects to: datalog/transformer.dl, rust/gate.rs -->
+
+<!ELEMENT training_record - - (meta, content, flags, seal?)>
+<!ATTLIST training_record
+  id              ID      #REQUIRED
+  source_sha256   CDATA   #REQUIRED
+  split           (train|val|test|holdout) #REQUIRED
+  created_by      CDATA   #REQUIRED
+  review_status   (approved|rejected|needs_rewrite|pending) #REQUIRED
+  weight          CDATA   #REQUIRED>
+
+<!-- Meta: provenance and classification -->
+<!ELEMENT meta - - (domain+, tags?)>
+<!ELEMENT domain - - (#PCDATA)>
+<!ATTLIST domain
+  critical (YES|NO) #REQUIRED>
+<!ELEMENT tags   - O (#PCDATA)>
+
+<!-- Content: the actual training data -->
+<!ELEMENT content - - (instruction, output, context?)>
+<!ELEMENT instruction - - (#PCDATA)>
+<!ELEMENT output      - - (#PCDATA)>
+<!ELEMENT context     - O (#PCDATA)>
+
+<!-- Flags: inaccuracy markers that trigger gate rejection -->
+<!ELEMENT flags        - O (inaccuracy*)>
+<!ELEMENT inaccuracy   - - (domain_ref, reason)>
+<!ELEMENT domain_ref   - - (#PCDATA)>
+<!ELEMENT reason       - - (#PCDATA)>
+<!ATTLIST inaccuracy
+  severity (minor|major|critical) #REQUIRED>
+
+<!-- Seal: WORM attestation -->
+<!ELEMENT seal - O EMPTY>
+<!ATTLIST seal
+  hash   CDATA  #REQUIRED
+  algo   CDATA  #FIXED "SHA-256">
+
+<!-- Entities for critical domains (mirrors transformer.dl) -->
+<!ENTITY critical_security         "security">
+<!ENTITY critical_cryptography     "cryptography">
+<!ENTITY critical_formal_verify    "formal_verification">
+<!ENTITY critical_systems_arch     "systems_architecture">
